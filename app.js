@@ -2,6 +2,7 @@ import express from 'express';
 import axios from 'axios';
 import qs from 'qs';
 import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
 
 
 const prisma = new PrismaClient();
@@ -54,7 +55,7 @@ app.get('/auth/kakao/callback', async function(req, res){
 
         const finduser = await prisma.kakaoUsers.findFirst({where : {kakaouserEmail : userResponse.data.kakao_account.email}})
         if(finduser){
-            return res.redirect('/as')
+            return res.redirect('/as');
         }else {
             await prisma.kakaoUsers.create({
                 data : {
@@ -75,9 +76,13 @@ app.get('/auth/kakao/callback', async function(req, res){
 })
 
 app.get('/as', async(req, res) => {
+
+    const user = await prisma.kakaoUsers.findFirst({where : '한덕용'});
+    const token = jwt.sign({useremail : user.kakaouserEmail});
+    res.setHeader('authorization', token);
     return res.status(201).json({msg : "로그인 성공" ,message : "로그인 후 사용할 api"})
 })
-
+ 
 
 app.listen(3000, () => {
     console.log('SERVER OPEN');
