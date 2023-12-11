@@ -2,12 +2,16 @@ import express from 'express';
 import axios from 'axios';
 import qs from 'qs';
 import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
 
 
 const prisma = new PrismaClient();
 const app = express();
 
 app.use(express.json());
+app.use(cors({
+    exposedHeaders: ["Authorization"],
+}))
 
 const CLIENT_ID = '8e93eaeaded45bab5247d4260ffa68d5';
 const REDIRECT_URI = 'http://43.201.51.203:3000/auth/kakao/callback';
@@ -54,7 +58,8 @@ app.get('/auth/kakao/callback', async function(req, res){
 
         const finduser = await prisma.kakaoUsers.findFirst({where : {kakaouserEmail : userResponse.data.kakao_account.email}})
         if(finduser){
-            return res.redirect('/as')
+            const token = jwt.sign({userEmail : finduser.kakaouserEmail}, 'secret');
+            return res.setHeader('Authorization', token).redirect('http://localhost:3000/auth/kakao/callback');
         }else {
             await prisma.kakaoUsers.create({
                 data : {
@@ -73,7 +78,6 @@ app.get('/auth/kakao/callback', async function(req, res){
         console.error(err);
     }
 })
-
 
 app.listen(3000, () => {
     console.log('SERVER OPEN');
