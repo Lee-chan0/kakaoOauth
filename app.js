@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json());
 
 const CLIENT_ID = '8e93eaeaded45bab5247d4260ffa68d5';
-const REDIRECT_URI = 'http://localhost:3000/auth/kakao/callback';
+const REDIRECT_URI = 'http://43.201.51.203:3000/auth/kakao/callback';
 
 // app.get('/', (req, res) => {
 //     res.send(`
@@ -54,7 +54,7 @@ app.get('/auth/kakao/callback', async function(req, res){
 
         const finduser = await prisma.kakaoUsers.findFirst({where : {kakaouserEmail : userResponse.data.kakao_account.email}})
         if(finduser){
-            return res.status(200).json({message : "로그인 성공"})
+            return res.redirect('/as')
         }else {
             await prisma.kakaoUsers.create({
                 data : {
@@ -72,6 +72,10 @@ app.get('/auth/kakao/callback', async function(req, res){
     }catch(err) {
         console.error(err);
     }
+})
+
+app.get('/as', async(req, res) => {
+    return res.status(201).json({msg : "로그인 성공" ,message : "로그인 후 사용할 api"})
 })
 
 
