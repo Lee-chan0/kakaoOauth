@@ -13,17 +13,17 @@ app.use(express.json());
 const CLIENT_ID = '8e93eaeaded45bab5247d4260ffa68d5';
 const REDIRECT_URI = 'http://43.201.51.203:3000/auth/kakao/callback';
 
-// app.get('/', (req, res) => {
-//     res.send(`
-//         <h1>login</h1>
-//         <a href="/login">sign in</a>
-//     `)
-// });
+app.get('/', (req, res) => {
+    res.send(`
+        <h1>login</h1>
+        <a href="/login">sign in</a>
+    `)
+});
 
-// app.get('/login', (req, res) => {
-//     const url=`https://kauth.kakao.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code`;
-//     res.redirect(url);
-// });
+app.get('/login', (req, res) => {
+    const url=`https://kauth.kakao.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code`;
+    res.redirect(url);
+});
 
 app.get('/auth/kakao/callback', async function(req, res){
     const {code} = req.query;
@@ -55,7 +55,11 @@ app.get('/auth/kakao/callback', async function(req, res){
 
         const finduser = await prisma.kakaoUsers.findFirst({where : {kakaouserEmail : userResponse.data.kakao_account.email}})
         if(finduser){
-            return res.redirect('/as');
+            const token = jwt.sign({userinfo : finduser.kakaouserEmail}, 'secret');
+
+            res.setHeader('authorization', token);
+            
+            return res.redirect(`http://localhost:3000/auth/kakao/callback?code=${code}`);
         }else {
             await prisma.kakaoUsers.create({
                 data : {
@@ -73,13 +77,6 @@ app.get('/auth/kakao/callback', async function(req, res){
     }catch(err) {
         console.error(err);
     }
-})
-
-app.get('/as', async(req, res) => {
-    const finduser = await prisma.kakaoUsers.findFirst({where : {kakaouserName : '한덕용'}});
-
-    const token = jwt.sign({userinfo : finduser.kakaouserEmail}, 'secret');
-    res.setHeader('authorization', token);
 })
 
 app.listen(3000, () => {
